@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package net_failover_manager;
+
+service NetworkConfig {
+  rpc GetDefaultGw(DefaultGwRequest) returns (DefaultGwResponse) {}
+  rpc GetIfStatus(IfStatusRequest) returns (IfStatusResponse) {}
+  rpc ForceNewGateway(ForceNewGatewayRequest)
+      returns (ForceNewGatewayResponse) {}
+}
+
+message DefaultGwRequest {}
+
+message DefaultGwResponse {
+  string default_gw_interface = 1;
+  // next available id = 2
+}
+
+message IfStatusRequest {}
+
+message IfStatus {
+  string if_name = 1;
+  string status = 2;
+  string last_checked_at = 3;
+  // next available id = 4.
+}
+
+message IfStatusResponse {
+  repeated IfStatus interface_status = 1;
+  // next available id = 2
+}
+
+message ForceNewGatewayRequest {
+  string if_name = 1;
+  // next available id = 2.
+}
+message ForceNewGatewayResponse {}

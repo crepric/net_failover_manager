@@ -1,0 +1,3 @@
+build --linkopt=-latomic
+build --cxxopt=-std=c++17
+build --cxxopt=-Wno-psabi
