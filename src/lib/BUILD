@@ -14,7 +14,7 @@
 # along with Net Failover Manager.  If not, see <https://www.gnu.org/licenses/>.
 
 cc_library(
-  name = "status_lib",
-  hdrs = ["status.h"],
-  visibility = ["//visibility:public"],
+    name = "status_lib",
+    hdrs = ["status.h"],
+    visibility = ["//visibility:public"],
 )
