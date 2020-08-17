@@ -21,18 +21,19 @@
 #ifndef NET_FAILOVER_MANAGER_NETCTL_ROUTE_MANAGER
 #define NET_FAILOVER_MANAGER_NETCTL_ROUTE_MANAGER
 
-#include "src/lib/status.h"
 #include <boost/asio/ip/address.hpp>
 #include <condition_variable>
 #include <functional>
 #include <iostream>
 #include <string>
 #include <thread>
+#include <unordered_set>
+#include "src/lib/status.h"
 
 namespace net_failover_manager {
 
 class RouteManager {
-public:
+ public:
   // Holds relevant details for each routing entry.
   typedef struct RoutingEntry {
     std::string if_name;
@@ -93,15 +94,17 @@ public:
   // one specified in the argument becomes the preferred one.
   Status SetDefaultGw(const std::string &new_gw_name);
 
-protected:
+ protected:
   // Delete copy and move constructors.
   RouteManager(const RouteManager &) = delete;
   RouteManager &operator=(const RouteManager &) = delete;
 
-private:
-  // Must be called with lock held.
+ private:
+  // These functions Must be called with lock held.
   bool SyncRoutingTable();
-  // Must be called with lock held.
+  // Compares the routing table with the list of interfaces that are expected
+  // to have an entry, and reports if an entry has disappeared.
+  const std::unordered_set<std::string> DetectMissingGateways();
   const std::string &DetectPrimaryDefaultGwInterface();
 
   mutable std::mutex mutex_;
@@ -113,16 +116,19 @@ private:
   // Highest priority (lowest number in the routing table) route for
   // a default Gateway. Protected by mutex_.
   std::string current_default_interface_;
+  // List of all known default gateways, used to track the disappearance of
+  // an entry and restore it if necessary.
+  std::unordered_set<std::string> known_gateway_interfaces_;
   // Stores the thread that periodically reads the routing table and keeps it in
   // sync.
   std::unique_ptr<std::thread> route_check_thread_;
   // If set, this callback is called every time a default gateway interface
   // changes.
-  mutable std::mutex cb_mutex_; // Dedicated mutex to avoid lock inversion.
+  mutable std::mutex cb_mutex_;  // Dedicated mutex to avoid lock inversion.
   GwChangedCallback default_gw_changed_cb_;
 
-}; // class RouteManager
+};  // class RouteManager
 
-} // namespace net_failover_manager
+}  // namespace net_failover_manager
 
-#endif // #ifndef NET_FAILOVER_MANAGER_NETCTL_ROUTE_MANAGER
+#endif  // #ifndef NET_FAILOVER_MANAGER_NETCTL_ROUTE_MANAGER

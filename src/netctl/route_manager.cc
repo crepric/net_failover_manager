@@ -17,16 +17,16 @@
 #include "route_manager.h"
 
 #include <arpa/inet.h>
-#include <boost/tokenizer.hpp>
 #include <errno.h>
-#include <fstream>
 #include <glog/logging.h>
-#include <iostream>
 #include <net/route.h>
-#include <string>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <boost/tokenizer.hpp>
+#include <fstream>
+#include <iostream>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -70,7 +70,6 @@ bool isAnyV4Address(::boost::asio::ip::address addr) {
 //           will be erased.
 void ConfigureRoute(char *if_name, int metric, in_addr_t gw_addr,
                     struct rtentry *route) {
-
   memset(route, 0, sizeof(*route));
 
   // Destination address for a default route is always 0.0.0.0
@@ -105,22 +104,22 @@ void ConfigureRoute(char *if_name, int metric, in_addr_t gw_addr,
 //   maxlen : lenght of the char array passed in with output.
 void get_ip_str(const struct sockaddr *sa, char *output, size_t maxlen) {
   switch (sa->sa_family) {
-  case AF_INET:
-    inet_ntop(AF_INET, &(((struct sockaddr_in *)sa)->sin_addr), output, maxlen);
-    break;
+    case AF_INET:
+      inet_ntop(AF_INET, &(((struct sockaddr_in *)sa)->sin_addr), output,
+                maxlen);
+      break;
 
-  case AF_INET6:
-    inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr), output,
-              maxlen);
-    break;
+    case AF_INET6:
+      inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr), output,
+                maxlen);
+      break;
 
-  default:
-    strncpy(output, "Unknown AF", maxlen);
+    default:
+      strncpy(output, "Unknown AF", maxlen);
   }
 }
 
 std::ostream &operator<<(std::ostream &strm, rtentry route) {
-
   char rt_dst_str[16];
   char rt_gateway_str[16];
   char rt_genmask_str[16];
@@ -174,12 +173,13 @@ std::ostream &operator<<(std::ostream &strm,
   return strm;
 }
 
-} // namespace
+}  // namespace
 
 RouteManager::RouteManager() : RouteManager(nullptr){};
 
 RouteManager::RouteManager(GwChangedCallback default_gw_changed_cb)
-    : checks_on_(false), route_check_thread_(nullptr),
+    : checks_on_(false),
+      route_check_thread_(nullptr),
       default_gw_changed_cb_(default_gw_changed_cb){};
 
 void RouteManager::StartChecks() {
@@ -327,32 +327,56 @@ bool RouteManager::SyncRoutingTable() {
     int count = 0;
     for (const auto &t : tok) {
       switch (count) {
-      case kIfNameOffset:
-        new_entry.if_name = t;
-        break;
-      case kDstAddressOffset:
-        new_entry.dst = MakeAddressFromIntAsStr(t);
-        break;
-      case kGwAddressOffset:
-        new_entry.gw = MakeAddressFromIntAsStr(t);
-        break;
-      case kMetricOffset:
-        new_entry.metric = stoi(t);
-        break;
-      default:
-        break;
+        case kIfNameOffset:
+          new_entry.if_name = t;
+          break;
+        case kDstAddressOffset:
+          new_entry.dst = MakeAddressFromIntAsStr(t);
+          break;
+        case kGwAddressOffset:
+          new_entry.gw = MakeAddressFromIntAsStr(t);
+          break;
+        case kMetricOffset:
+          new_entry.metric = stoi(t);
+          break;
+        default:
+          break;
       }
       count++;
     }
     routing_entries_.push_back(new_entry);
   }
+  auto missing_gateways = DetectMissingGateways();
+  if (!missing_gateways.empty()) {
+    for (auto entry : missing_gateways) {
+      LOG(WARNING) << "Missing expected gateway from routing table:" << entry;
+      // TODO(crepric): debug why this happens and figure out if we need to
+      // re-run dhcp here, or if we should let it be handled with the other
+      // GW changes logic. The problem is if the interface somehow goes
+      // unhelthy and needs to be brought down and up again to be fixed, which
+      // shouldn't happen.
+    }
+  }
   DetectPrimaryDefaultGwInterface();
   return true;
 }
 
+const std::unordered_set<std::string> RouteManager::DetectMissingGateways() {
+  // Mutex must be locked by caller.
+  std::unordered_set<std::string> ret = known_gateway_interfaces_;
+  for (const auto &entry : routing_entries_) {
+    if (isAnyV4Address(entry.dst)) {
+      DLOG(INFO) << "Inserting known gateway " << entry.if_name;
+      known_gateway_interfaces_.insert(entry.if_name);
+      ret.erase(entry.if_name);
+    }
+  }
+  return ret;
+}
+
 const std::string &RouteManager::DetectPrimaryDefaultGwInterface() {
   // Mutex must be locked by caller.
-  int min_metric = INT_MAX; // Lower priority number means higher priority.
+  int min_metric = INT_MAX;  // Lower priority number means higher priority.
   std::string ret;
   for (const auto &entry : routing_entries_) {
     if (entry.metric >= min_metric) {
@@ -387,4 +411,4 @@ const std::string &RouteManager::DetectPrimaryDefaultGwInterface() {
   return current_default_interface_;
 }
 
-} // namespace net_failover_manager
+}  // namespace net_failover_manager
