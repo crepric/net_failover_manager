@@ -38,7 +38,7 @@ const int kPingDuration = 3;      // seconds, duration of ping command.
 const float kPingInterval = 0.5;  // seconds, interval between pings.
 
 // Interval between two ping commands.
-const std::chrono::duration kIfCheckInterval = std::chrono::seconds(5);
+const std::chrono::duration kIfCheckInterval = std::chrono::seconds(20);
 
 // Ping packet loss threshold for healthy interface;
 const int kPingPacketLossThreshold = 25;
