@@ -14,20 +14,20 @@
 // along with Net Failover Manager.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <stdlib.h>
 #include <chrono>
 #include <iostream>
-#include <stdlib.h>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include <gflags/gflags.h>
+#include <glog/logging.h>
+#include <grpcpp/grpcpp.h>
 #include "src/netctl/gateway_config_manager.h"
 #include "src/netctl/interface_checker.h"
 #include "src/netctl/route_manager.h"
 #include "src/service/net_failover_manager_service_impl.h"
-#include <gflags/gflags.h>
-#include <glog/logging.h>
-#include <grpcpp/grpcpp.h>
 
 using net_failover_manager::GatewayConfigManager;
 using net_failover_manager::InterfaceChecker;
@@ -57,10 +57,12 @@ void RunServer(RouteManager *rm, InterfaceChecker *ic) {
 int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
-  std::vector<std::string> interfaces = {"eth1", "usb0", "eth0"};
+  google::InstallFailureSignalHandler();
+  std::vector<std::string> interfaces = {"eth1", "usb0"};
   InterfaceChecker ic(interfaces);
   RouteManager rm;
   GatewayConfigManager gm(&ic, &rm);
+  gm.SetPreferredGatewayInterfaces(interfaces);
   LOG(INFO) << "Starting the interface checks";
   ic.StartChecks();
   rm.StartChecks();
