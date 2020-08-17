@@ -58,11 +58,12 @@ grpc::Status NetworkConfigImpl::GetIfStatus(grpc::ServerContext *context,
   return grpc::Status::OK;
 }
 
-grpc::Status
-NetworkConfigImpl::ForceNewGateway(grpc::ServerContext *context,
-                                   const ForceNewGatewayRequest *request,
-                                   ForceNewGatewayResponse *response) {
+grpc::Status NetworkConfigImpl::ForceNewGateway(
+    grpc::ServerContext *context, const ForceNewGatewayRequest *request,
+    ForceNewGatewayResponse *response) {
+  // TODO(crepric): change the preferred order if necessary or this  action
+  // will be reversed.
   rm_->SetDefaultGw(request->if_name());
   return grpc::Status::OK;
 }
-} // namespace net_failover_manager
+}  // namespace net_failover_manager
