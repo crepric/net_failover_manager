@@ -142,6 +142,10 @@ bool InterfaceChecker::StartChecks() {
             {
               std::unique_lock<std::mutex> lock(mutex_);
               if (interface_status_[interface_name].status != status) {
+                LOG(INFO) << "Status changed for " << interface_name << " from "
+                          << InterfaceStatusAsString(
+                                 interface_status_[interface_name].status)
+                          << " to " << InterfaceStatusAsString(status);
                 std::unique_lock<std::mutex> lock(cb_mutex_);
                 if (status_changed_cb_) {
                   // FIXME: It is possible that more than one interface changes
