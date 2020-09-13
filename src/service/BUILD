@@ -15,8 +15,6 @@
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
-load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
-load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library")
 
 cc_library(
     name = "net_failover_manager_service_lib",
