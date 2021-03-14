@@ -62,13 +62,14 @@ boost_deps()
 # Dependency for GRPC
 http_archive(
     name = "com_github_grpc_grpc",
-    sha256 = "2fcb7f1ab160d6fd3aaade64520be3e5446fc4c6fa7ba6581afdc4e26094bd81",
-    strip_prefix = "grpc-1.26.0",
+    # sha256 = "2fcb7f1ab160d6fd3aaade64520be3e5446fc4c6fa7ba6581afdc4e26094bd81",
+    strip_prefix = "grpc-1.36.2",
     urls = [
         #  This version of GRPC does not compile on raspberry, the "--linkopt=-latomic"
         #  otpion is not honored by bazel.
         #       "https://github.com/grpc/grpc/archive/v1.30.0.tar.gz",
-        "https://github.com/grpc/grpc/archive/v1.26.0.tar.gz",
+        # "https://github.com/grpc/grpc/archive/v1.26.0.tar.gz",
+        "https://github.com/grpc/grpc/archive/v1.36.2.tar.gz",
     ],
 )
 
